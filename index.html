@@ -22,7 +22,7 @@
         body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; }
         .container { width: 100%; max-width: 720px; }
         h1 { font-size: 1.45rem; text-align: center; margin-bottom: 6px; color: var(--accent); }
-        .desc { text-align: center; font-size: 0.85rem; color: var(--subtext); margin-bottom: 18px; line-height: 1.4; }
+        .desc { text-align: center; font-size: 0.85rem; color: var(--subtext); margin-bottom: 18px; line-height: 1.5; }
         
         .search-box { display: flex; gap: 8px; margin-bottom: 14px; }
         input {
@@ -84,7 +84,9 @@
 
 <div class="container">
     <h1>赛尔号 PVE 强攻手速查表</h1>
-    <p class="desc">专为高难度 Boss 打造。<br>强攻手定义：具备极高单发爆发、连环暴击引爆或巨额粉伤的顶级打手。</p>
+    <p class="desc">
+        <strong>PVE强攻手定义</strong>：具备极高单发爆发、连环暴击引爆、<span style="color:var(--accent)">低体力3倍等高倍率红伤</span>、<span style="color:var(--accent)">魂印巨额常驻增伤</span>或高额粉伤的顶级打手。
+    </p>
 
     <div class="search-box">
         <input type="text" id="propInput" placeholder="输入 Boss 属性，如：水·暗影、草、圣灵">
@@ -97,28 +99,28 @@
         <span class="tag" onclick="quickQuery('水·暗影')">水·暗影</span>
         <span class="tag" onclick="quickQuery('电·战斗')">电·战斗</span>
         <span class="tag" onclick="quickQuery('远古·战斗')">远古·战斗</span>
-        <span class="tag" onclick="quickQuery('机械·地面')">机械·地面</span>
-        <span class="tag" onclick="quickQuery('神秘')">神秘</span>
+        <span class="tag" onclick="quickQuery('暗影')">暗影</span>
+        <span class="tag" onclick="quickQuery('超能')">超能</span>
     </div>
 
     <div class="result-container" id="resultBox"></div>
 </div>
 
 <script>
-// PVE 核心强攻手数据库（已严格审查系别分类与爆发定义）
+// PVE 核心强攻手数据库（已加入低体3倍高爆与魂印高增伤系列）
 const petLibrary = {
     // 单系强攻手
-    "冰": ["艾欧丽娅 (平民神宠/高额粉伤)", "柯尔德"],
-    "自然": ["幻境界皇 (站场之神)", "希瓦"],
+    "冰": ["艾欧丽娅 (极高固伤/暴击)", "柯尔德"],
+    "自然": ["幻境界皇 (站场续航之神)", "希瓦"],
     "龙": ["王之哈莫 (引爆强攻天花板)", "龙胆·赵云"],
     "光": ["光之惩戒·英卡洛斯 (必爆高伤核弹)"],
-    "邪灵": ["万妖王·摩哥斯 (堕落绝语单点爆破)"],
+    "邪灵": ["魔钰 (低体3倍极高爆发)", "万妖王·摩哥斯 (单点爆破)"],
     "混沌": ["混沌魔君索伦森"],
     "圣灵": ["圣灵谱尼 (六维拉满/免控输出)"],
     "火": ["不灭·艾恩斯", "爆炎·吉尔"],
     "草": ["生灵之主·蒙娜丽莎", "魔灵仙女"],
     "水": ["沧岚", "利爪鲁斯王"],
-    "电": ["王·雷伊", "雷神雷伊"],
+    "电": ["怒雷·神裁雷伊 (低体3倍极高爆发)", "王·雷伊", "雷神雷伊"],
     "地面": ["王·卡修斯", "镇魂·波希冬"],
     "飞行": ["王·托鲁克", "圣化托鲁克"],
     "机械": ["赛伯斯特", "机械塔克林"],
@@ -132,10 +134,11 @@ const petLibrary = {
     "神灵": ["天启帝君 (PVE万金油)"],
 
     // 双属性复合强攻手
+    "光·次元": ["月照星魂 (低体3倍极高爆发)", "时空界皇"],
+    "远古·战斗": ["典韦 (魂印巨额常驻增伤)", "格罗姆特 (屠龙者/超高暴击)"],
     "圣灵·电": ["圣霆·雷伊 (强攻麻痹破防)", "圣灵雷皇"],
     "自然·冰": ["千裳 (平民强化天花板)"],
     "圣灵·自然": ["莫妮卡"],
-    "远古·战斗": ["格罗姆特 (屠龙者/超高暴击)"],
     "电·战斗": ["圣甲·雷伊"],
     "混沌·圣灵": ["混沌·圣灵谱尼"],
     "机械·地面": ["玄武完全体", "圣甲·地裂"],
@@ -170,9 +173,9 @@ const baseCounters = {
 
 // 预登记的双属性强攻手组合字典
 const dualPropsList = [
-    ["圣灵", "电"], ["自然", "冰"], ["圣灵", "自然"], ["远古", "战斗"],
-    ["电", "战斗"], ["混沌", "圣灵"], ["机械", "地面"], ["圣灵", "次元"],
-    ["混沌", "暗影"], ["水", "龙"]
+    ["光", "次元"], ["圣灵", "电"], ["自然", "冰"], ["圣灵", "自然"], 
+    ["远古", "战斗"], ["电", "战斗"], ["混沌", "圣灵"], ["机械", "地面"], 
+    ["圣灵", "次元"], ["混沌", "暗影"], ["水", "龙"]
 ];
 
 function quickQuery(name) {
@@ -263,12 +266,12 @@ function calculate() {
         resultBox.innerHTML = `
             <div class="group-card">
                 <div class="prop-item">
-                    无明显属性克制。建议直接出动无视克制关系的 <strong>“真伤/无脑爆破真神”</strong>：
+                    无明显属性克制。建议直接出动无视克制关系的 <strong>“机制类强攻真神”</strong>：
                     <div class="pet-list" style="margin-top:8px;">
-                        <span class="pet-tag"><span class="pet-mult c-20">龙</span>王之哈莫</span>
-                        <span class="pet-tag"><span class="pet-mult c-20">冰</span>艾欧丽娅</span>
-                        <span class="pet-tag"><span class="pet-mult c-20">自然</span>幻境界皇</span>
-                        <span class="pet-tag"><span class="pet-mult c-20">光</span>光之惩戒·英卡洛斯</span>
+                        <span class="pet-tag"><span class="pet-mult c-20">引爆</span>王之哈莫</span>
+                        <span class="pet-tag"><span class="pet-mult c-20">固伤</span>艾欧丽娅</span>
+                        <span class="pet-tag"><span class="pet-mult c-20">站场</span>幻境界皇</span>
+                        <span class="pet-tag"><span class="pet-mult c-20">低体</span>魔钰</span>
                     </div>
                 </div>
             </div>
