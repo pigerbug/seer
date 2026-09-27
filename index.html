@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>赛尔号属性克制与PVE强攻手速查</title>
+    <title>赛尔号 PVE 战术终端</title>
     <style>
         :root {
-            --primary: #2563eb;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
             --bg: #0b1120;
             --card: #1e293b;
+            --card-hover: #334155;
             --border: #334155;
             --text: #f8fafc;
             --subtext: #94a3b8;
@@ -17,245 +19,328 @@
             --orange: #f97316;
             --yellow: #eab308;
             --green: #10b981;
+            --purple: #a855f7;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 720px; }
+        .container { width: 100%; max-width: 760px; }
+        
+        /* 顶部导航 Tabs */
+        .nav-tabs {
+            display: flex; gap: 10px; margin-bottom: 20px;
+            background: rgba(30, 41, 59, 0.5); padding: 6px; border-radius: 12px; border: 1px solid var(--border);
+        }
+        .nav-tab {
+            flex: 1; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold;
+            cursor: pointer; transition: 0.3s; color: var(--subtext); border: none; background: transparent; font-size: 0.95rem;
+        }
+        .nav-tab.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .nav-tab:hover:not(.active) { background: rgba(255, 255, 255, 0.05); color: #fff; }
+
+        /* 通用样式 */
         h1 { font-size: 1.45rem; text-align: center; margin-bottom: 6px; color: var(--accent); }
         .desc { text-align: center; font-size: 0.85rem; color: var(--subtext); margin-bottom: 18px; line-height: 1.5; }
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* === 页面 1：计算器样式 === */
         .search-box { display: flex; gap: 8px; margin-bottom: 14px; }
-        input {
-            flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border);
-            background: var(--card); color: #fff; font-size: 1rem; outline: none;
-        }
+        input { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: #fff; font-size: 1rem; outline: none; }
         input:focus { border-color: var(--accent); }
-        button {
-            padding: 12px 22px; border-radius: 8px; border: none; background: var(--primary);
-            color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; white-space: nowrap;
-        }
-        button:hover { background: #1d4ed8; }
-        
+        button.action-btn { padding: 12px 22px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+        button.action-btn:hover { background: var(--primary-hover); }
         .tags-label { font-size: 0.75rem; color: var(--subtext); margin-bottom: 6px; }
         .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
-        .tag {
-            font-size: 0.78rem; padding: 5px 10px; background: #1e293b; border: 1px solid var(--border);
-            border-radius: 6px; cursor: pointer; color: #cbd5e1;
-        }
+        .tag { font-size: 0.78rem; padding: 5px 10px; background: #1e293b; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: #cbd5e1; transition: 0.2s; }
         .tag:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-        .result-container { display: flex; flex-direction: column; gap: 14px; }
-        .group-card {
-            background: var(--card); border-radius: 10px; padding: 14px 16px;
-            border: 1px solid var(--border);
-        }
-
-        .rate-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
+        .group-card { background: var(--card); border-radius: 10px; padding: 14px 16px; border: 1px solid var(--border); margin-bottom: 14px; }
+        .rate-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .rate-badge { font-size: 1.15rem; font-weight: bold; display: flex; align-items: center; gap: 6px; }
         .rate-tag { font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; font-weight: normal; }
-
         .prop-item { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.06); }
         .prop-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
         .prop-title { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
         .prop-name { color: #facc15; font-weight: bold; font-size: 0.98rem; }
         .prop-type-badge { font-size: 0.72rem; padding: 1px 6px; border-radius: 3px; background: #334155; color: #cbd5e1; }
-        
         .pet-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
-        .pet-tag {
-            display: inline-flex; align-items: center; gap: 4px;
-            background: rgba(15, 23, 42, 0.6); border: 1px solid #334155;
-            padding: 4px 8px; border-radius: 6px; font-size: 0.82rem; color: #f1f5f9;
-        }
+        .pet-tag { display: inline-flex; align-items: center; gap: 4px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 0.82rem; color: #f1f5f9; }
         .pet-mult { font-size: 0.75rem; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
-        
-        .c-40 { color: var(--red); } .c-25 { color: var(--orange); }
-        .c-20 { color: var(--yellow); } .c-15 { color: var(--accent); } .c-12 { color: var(--green); }
+
+        /* 倍率颜色 */
+        .c-40 { color: var(--red); } .c-25 { color: var(--orange); } .c-20 { color: var(--yellow); } .c-15 { color: var(--accent); } .c-12 { color: var(--green); }
         .bg-40 { background: rgba(239, 68, 68, 0.15); color: var(--red); border-left: 5px solid var(--red); }
         .bg-25 { background: rgba(249, 115, 22, 0.15); color: var(--orange); border-left: 5px solid var(--orange); }
         .bg-20 { background: rgba(234, 179, 8, 0.15); color: var(--yellow); border-left: 5px solid var(--yellow); }
         .bg-15 { background: rgba(56, 189, 248, 0.15); color: var(--accent); border-left: 5px solid var(--accent); }
-        .bg-12 { background: rgba(16, 185, 129, 0.15); color: var(--green); border-left: 5px solid var(--green); }
+
+        /* === 页面 2：图鉴样式 === */
+        .dex-section-title { font-size: 0.9rem; color: var(--accent); margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+        .type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; margin-bottom: 20px; }
+        .type-btn { padding: 8px 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: #cbd5e1; font-size: 0.85rem; cursor: pointer; text-align: center; transition: 0.2s; }
+        .type-btn:hover { background: var(--card-hover); border-color: var(--accent); color: #fff; }
+        .type-btn.active { background: rgba(56, 189, 248, 0.15); border-color: var(--accent); color: var(--accent); font-weight: bold; }
+        
+        .attacker-card { background: var(--card); border-radius: 10px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); border-left: 4px solid var(--purple); position: relative; }
+        .atk-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .atk-name { font-size: 1.1rem; font-weight: bold; color: #fff; }
+        .atk-mult-badge { background: rgba(239, 68, 68, 0.15); color: var(--red); padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .atk-mult-badge.high { background: rgba(249, 115, 22, 0.15); color: var(--orange); border-color: rgba(249, 115, 22, 0.3); }
+        .atk-mult-badge.mid { background: rgba(234, 179, 8, 0.15); color: var(--yellow); border-color: rgba(234, 179, 8, 0.3); }
+        
+        .atk-detail { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
+        .atk-label { color: var(--subtext); width: 65px; flex-shrink: 0; }
+        .atk-skill { color: #facc15; font-weight: 500; }
+        .atk-power { background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: #fff; }
+        .atk-passive { color: var(--accent); line-height: 1.4; background: rgba(56, 189, 248, 0.08); padding: 6px; border-radius: 6px; border-left: 2px solid var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>赛尔号 PVE 强攻手速查表</h1>
-    <p class="desc">
-        <strong>PVE强攻手定义</strong>：具备极高单发爆发、连环暴击引爆、<span style="color:var(--accent)">低体力3倍等高倍率红伤</span>、<span style="color:var(--accent)">魂印巨额常驻增伤</span>或高额粉伤的顶级打手。
-    </p>
-
-    <div class="search-box">
-        <input type="text" id="propInput" placeholder="输入 Boss 属性，如：水·暗影、草、圣灵">
-        <button onclick="calculate()">计算克制与打手</button>
+    <div class="nav-tabs">
+        <button class="nav-tab active" id="tab1-btn" onclick="switchTab(1)">⚔️ 属性与打手计算</button>
+        <button class="nav-tab" id="tab2-btn" onclick="switchTab(2)">📖 系别强攻手图鉴</button>
     </div>
 
-    <div class="tags-label">热门 Boss 属性测试：</div>
-    <div class="tags">
-        <span class="tag" onclick="quickQuery('草')">草</span>
-        <span class="tag" onclick="quickQuery('水·暗影')">水·暗影</span>
-        <span class="tag" onclick="quickQuery('电·战斗')">电·战斗</span>
-        <span class="tag" onclick="quickQuery('远古·战斗')">远古·战斗</span>
-        <span class="tag" onclick="quickQuery('暗影')">暗影</span>
-        <span class="tag" onclick="quickQuery('超能')">超能</span>
+    <!-- 页面 1：计算器 -->
+    <div id="page1" class="page active">
+        <h1>赛尔号 PVE 克制计算器</h1>
+        <p class="desc">输入 Boss 属性（单/双系），一键换算克制倍率及针对性强攻手。</p>
+        
+        <div class="search-box">
+            <input type="text" id="propInput" placeholder="输入Boss属性，如：水·暗影、草、电·战斗">
+            <button class="action-btn" onclick="calculate()">计算最优解</button>
+        </div>
+        <div class="tags-label">快捷测试：</div>
+        <div class="tags">
+            <span class="tag" onclick="quickCalc('草')">草</span>
+            <span class="tag" onclick="quickCalc('水·暗影')">水·暗影</span>
+            <span class="tag" onclick="quickCalc('电·战斗')">电·战斗</span>
+            <span class="tag" onclick="quickCalc('远古·战斗')">远古·战斗</span>
+        </div>
+        <div id="calcResultBox"></div>
     </div>
 
-    <div class="result-container" id="resultBox"></div>
+    <!-- 页面 2：强攻手图鉴 -->
+    <div id="page2" class="page">
+        <h1>强攻手倍率与魂印图鉴</h1>
+        <p class="desc">点击系别，查看该系顶级打手。自动按<strong>最高伤害倍率</strong>降序排列。</p>
+
+        <div class="dex-section-title">核心单属性</div>
+        <div class="type-grid" id="dexSingleTypes"></div>
+        
+        <div class="dex-section-title">复合双属性</div>
+        <div class="type-grid" id="dexDualTypes"></div>
+
+        <div id="dexResultBox" style="margin-top: 16px;">
+            <div style="text-align:center; color: #94a3b8; padding: 30px 0;">请在上方选择一个系别查看对应的强攻手详情</div>
+        </div>
+    </div>
 </div>
 
 <script>
-// PVE 核心强攻手数据库（已加入低体3倍高爆与魂印高增伤系列）
-const petLibrary = {
-    // 单系强攻手
-    "冰": ["艾欧丽娅 (极高固伤/暴击)", "柯尔德"],
-    "自然": ["幻境界皇 (站场续航之神)", "希瓦"],
-    "龙": ["王之哈莫 (引爆强攻天花板)", "龙胆·赵云"],
-    "光": ["光之惩戒·英卡洛斯 (必爆高伤核弹)"],
-    "邪灵": ["魔钰 (低体3倍极高爆发)", "万妖王·摩哥斯 (单点爆破)"],
-    "混沌": ["混沌魔君索伦森"],
-    "圣灵": ["圣灵谱尼 (六维拉满/免控输出)"],
-    "火": ["不灭·艾恩斯", "爆炎·吉尔"],
-    "草": ["生灵之主·蒙娜丽莎", "魔灵仙女"],
-    "水": ["沧岚", "利爪鲁斯王"],
-    "电": ["怒雷·神裁雷伊 (低体3倍极高爆发)", "王·雷伊", "雷神雷伊"],
-    "地面": ["王·卡修斯", "镇魂·波希冬"],
-    "飞行": ["王·托鲁克", "圣化托鲁克"],
-    "机械": ["赛伯斯特", "机械塔克林"],
-    "战斗": ["阿尔蒂克 (高连击爆发)", "王·盖亚"],
-    "超能": ["王·缪斯", "海瑟薇"],
-    "暗影": ["暗影极夜·诺伊尔顿"],
-    "神秘": ["米斯蒂克"],
-    "次元": ["星皇", "弗里德"],
-    "远古": ["远古王", "库贝萨隆"],
-    "王": ["重生之翼 (叠层无敌强攻)"],
-    "神灵": ["天启帝君 (PVE万金油)"],
+// ==========================================
+// 全局导航逻辑
+// ==========================================
+function switchTab(tabIndex) {
+    document.getElementById('page1').classList.remove('active');
+    document.getElementById('page2').classList.remove('active');
+    document.getElementById('tab1-btn').classList.remove('active');
+    document.getElementById('tab2-btn').classList.remove('active');
+    
+    document.getElementById(`page${tabIndex}`).classList.add('active');
+    document.getElementById(`tab${tabIndex}-btn`).classList.add('active');
+}
 
-    // 双属性复合强攻手
-    "光·次元": ["月照星魂 (低体3倍极高爆发)", "时空界皇"],
-    "远古·战斗": ["典韦 (魂印巨额常驻增伤)", "格罗姆特 (屠龙者/超高暴击)"],
-    "圣灵·电": ["圣霆·雷伊 (强攻麻痹破防)", "圣灵雷皇"],
-    "自然·冰": ["千裳 (平民强化天花板)"],
-    "圣灵·自然": ["莫妮卡"],
-    "电·战斗": ["圣甲·雷伊"],
-    "混沌·圣灵": ["混沌·圣灵谱尼"],
-    "机械·地面": ["玄武完全体", "圣甲·地裂"],
-    "圣灵·次元": ["星皇"],
-    "混沌·暗影": ["混沌魔君索伦森"],
-    "水·龙": ["沧澜·龙尊"]
+// ==========================================
+// 数据库区：图鉴详细数据（倍率、技能威力、魂印）
+// ==========================================
+// 强攻手定义：低体高倍、魂印高增伤、连击/必定暴击真伤
+const dexLibrary = {
+    // === 单属性 ===
+    "电": [
+        { name: "怒雷·神裁雷伊", skill: "怒雷碎天击", power: 150, mult: 3.0, passive: "血量低于一半时，技能伤害提升至3倍；体力高于一半时附带高额固伤", type: "单系" },
+        { name: "雷神雷伊", skill: "雷神双倍/雷神天明闪", power: 160, mult: 4.0, passive: "经典4倍爆发：目标处于麻痹状态且触发技能双倍时极易打出毁灭性红伤", type: "单系" },
+        { name: "王·雷伊", skill: "万霆归宗诀", power: 150, mult: 2.0, passive: "魂印自带高额雷电穿透增伤与连击几率", type: "单系" }
+    ],
+    "邪灵": [
+        { name: "魔钰", skill: "第五技能/绝影幽魂击", power: 160, mult: 3.0, passive: "PVE红伤核弹：自身体力低于最大体力1/2时，造成伤害提升300%", type: "单系" },
+        { name: "万妖王·摩哥斯", skill: "堕落绝语", power: 130, mult: 2.0, passive: "无脑单点爆破：技能效果必定造成2倍伤害，无视部分防御机制", type: "单系" }
+    ],
+    "光": [
+        { name: "光之惩戒·英卡洛斯", skill: "天际惩戒刺", power: 150, mult: 2.0, passive: "神仙面板：进入战斗自动触发高额增伤，大招必定暴击（2倍）且附带已损体力真实伤害", type: "单系" }
+    ],
+    "自然": [
+        { name: "幻境界皇", skill: "第五技能", power: 160, mult: 2.0, passive: "站场真神：回合开始时若体力大于一半附加高额护盾，若低于一半则回血；大招大概率暴击（2倍）", type: "单系" }
+    ],
+    "冰": [
+        { name: "艾欧丽娅", skill: "自然冰之怒", power: 150, mult: 2.5, passive: "平民神宠：【女汉子】特性附带极高固定伤害，大招大概率触发致命一击；混合粉红伤害极高", type: "单系" }
+    ],
+    "龙": [
+        { name: "王之哈莫", skill: "王·龙战八荒", power: 160, mult: 2.0, passive: "引爆强攻天花板：龙战野强化+引爆，第五技能满血状态下造成巨额额外伤害", type: "单系" },
+        { name: "龙胆·赵云", skill: "大招", power: 150, mult: 2.0, passive: "体力越低伤害越高，极低体力时可触发翻倍红伤", type: "单系" }
+    ],
+    "圣灵": [
+        { name: "圣灵谱尼", skill: "神灵之触/第五", power: 160, mult: 2.0, passive: "六维拉满：免控、高额固定减伤，魂印附带极高增伤乘区与巨额粉伤", type: "单系" }
+    ],
+    "火": [
+        { name: "不灭·艾恩斯", skill: "第五技能", power: 160, mult: 2.0, passive: "焚烬状态下高额增伤，受击触发强力回血与固伤反弹", type: "单系" }
+    ],
+    
+    // === 复合双属性 ===
+    "光·次元": [
+        { name: "月照星魂", skill: "星月轮转击", power: 150, mult: 3.0, passive: "核弹级爆发：自身体力低于最大体力1/2时，所有技能造成的伤害翻3倍", type: "双系" }
+    ],
+    "远古·战斗": [
+        { name: "典韦", skill: "第五技能", power: 160, mult: 2.5, passive: "叠加增伤：魂印随受击或回合数叠加巨额常驻增伤，攻击附带高额真实伤害", type: "双系" },
+        { name: "格罗姆特", skill: "屠龙之刃", power: 150, mult: 2.0, passive: "屠龙者：面对特定系别（如龙系）拥有额外独立乘区增伤，极易触发暴击", type: "双系" }
+    ],
+    "圣灵·电": [
+        { name: "圣霆·雷伊", skill: "第五技能", power: 160, mult: 2.0, passive: "强攻麻痹破防：攻击有概率使对手麻痹，若对手处于异常状态则伤害提升", type: "双系" }
+    ],
+    "自然·冰": [
+        { name: "千裳", skill: "第五技能", power: 160, mult: 2.0, passive: "极速强化：魂印自带免控与回血，第五技能吸取强化并转化为自身高额输出基数", type: "双系" }
+    ],
+    "混沌·暗影": [
+        { name: "混沌魔君索伦森", skill: "第五/大招", power: 160, mult: 2.0, passive: "混沌核心：极高双防穿透，强化后大招必定暴击且附带最大体力百分比吸血", type: "双系" }
+    ]
 };
 
-// 基础单系完全克制池（系数：2.0）
+// 提取用于计算器的简略名单
+const calcPetLibrary = {};
+Object.keys(dexLibrary).forEach(type => {
+    calcPetLibrary[type] = dexLibrary[type].map(p => p.name);
+});
+
+// ==========================================
+// 页面 2：图鉴渲染逻辑
+// ==========================================
+function initDexTabs() {
+    const singleTypes = ["电", "邪灵", "光", "自然", "冰", "龙", "圣灵", "火"];
+    const dualTypes = ["光·次元", "远古·战斗", "圣灵·电", "自然·冰", "混沌·暗影"];
+    
+    const renderBtns = (arr, containerId) => {
+        const container = document.getElementById(containerId);
+        arr.forEach(type => {
+            const btn = document.createElement('div');
+            btn.className = 'type-btn';
+            btn.innerText = type;
+            btn.onclick = () => showDexResults(type, btn);
+            container.appendChild(btn);
+        });
+    };
+    renderBtns(singleTypes, 'dexSingleTypes');
+    renderBtns(dualTypes, 'dexDualTypes');
+}
+
+function showDexResults(type, btnElement) {
+    // 按钮高亮处理
+    document.querySelectorAll('.type-btn').forEach(el => el.classList.remove('active'));
+    btnElement.classList.add('active');
+
+    const resultBox = document.getElementById('dexResultBox');
+    const pets = dexLibrary[type];
+
+    if (!pets || pets.length === 0) {
+        resultBox.innerHTML = `<div style="text-align:center; color: #94a3b8; padding: 20px;">该系暂未收录核心强攻手</div>`;
+        return;
+    }
+
+    // ★ 核心需求：从高到底倍率排序
+    const sortedPets = [...pets].sort((a, b) => b.mult - a.mult);
+
+    let html = '';
+    sortedPets.forEach(pet => {
+        // 根据倍率给勋章上色
+        let badgeCls = 'mid';
+        if (pet.mult >= 3.0) badgeCls = ''; // Red
+        else if (pet.mult >= 2.5) badgeCls = 'high'; // Orange
+
+        html += `
+            <div class="attacker-card">
+                <div class="atk-header">
+                    <div class="atk-name">${pet.name}</div>
+                    <div class="atk-mult-badge ${badgeCls}">最高倍率: ${pet.mult.toFixed(1)}x</div>
+                </div>
+                <div class="atk-detail">
+                    <span class="atk-label">核心技能:</span>
+                    <span class="atk-skill">${pet.skill}</span>
+                    <span class="atk-power">威力 ${pet.power}</span>
+                </div>
+                <div class="atk-detail" style="align-items:flex-start;">
+                    <span class="atk-label">增伤机制:</span>
+                    <div class="atk-passive">${pet.passive}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    resultBox.innerHTML = html;
+}
+
+// ==========================================
+// 页面 1：计算器逻辑 (复用之前的计算逻辑)
+// ==========================================
 const baseCounters = {
-    "草": ["水", "地面", "光"],
-    "水": ["火", "地面"],
-    "火": ["草", "冰", "机械"],
-    "电": ["水", "飞行", "暗影"],
-    "地面": ["火", "电", "机械"],
-    "飞行": ["草", "战斗"],
-    "战斗": ["机械", "冰", "龙", "圣灵"],
-    "机械": ["冰", "战斗"],
-    "冰": ["草", "地面", "飞行", "龙"],
-    "光": ["暗影", "超能"],
-    "暗影": ["超能", "次元"],
-    "神秘": ["电", "圣灵"],
-    "龙": ["冰", "圣灵"],
-    "圣灵": ["水", "火", "草", "电", "冰"],
-    "次元": ["超能", "邪灵"],
-    "邪灵": ["光", "暗影"],
-    "自然": ["水", "火", "草", "地面", "光"],
-    "王": ["草", "水", "火", "战斗", "暗影", "光"],
-    "混沌": ["圣灵", "暗影", "邪灵"],
-    "神灵": ["混沌", "邪灵", "神秘"]
+    "草": ["水", "地面", "光"], "水": ["火", "地面"], "火": ["草", "冰", "机械"],
+    "电": ["水", "飞行", "暗影"], "地面": ["火", "电", "机械"], "飞行": ["草", "战斗"],
+    "战斗": ["机械", "冰", "龙", "圣灵"], "机械": ["冰", "战斗"], "冰": ["草", "地面", "飞行", "龙"],
+    "光": ["暗影", "超能"], "暗影": ["超能", "次元"], "神秘": ["电", "圣灵"],
+    "龙": ["冰", "圣灵"], "圣灵": ["水", "火", "草", "电", "冰"], "次元": ["超能", "邪灵"],
+    "邪灵": ["光", "暗影"], "自然": ["水", "火", "草", "地面", "光"], "王": ["草", "水", "火", "战斗", "暗影", "光"],
+    "混沌": ["圣灵", "暗影", "邪灵"], "神灵": ["混沌", "邪灵", "神秘"]
 };
+const dualPropsList = [["光", "次元"], ["圣灵", "电"], ["自然", "冰"], ["远古", "战斗"], ["混沌", "暗影"]];
 
-// 预登记的双属性强攻手组合字典
-const dualPropsList = [
-    ["光", "次元"], ["圣灵", "电"], ["自然", "冰"], ["圣灵", "自然"], 
-    ["远古", "战斗"], ["电", "战斗"], ["混沌", "圣灵"], ["机械", "地面"], 
-    ["圣灵", "次元"], ["混沌", "暗影"], ["水", "龙"]
-];
-
-function quickQuery(name) {
-    document.getElementById('propInput').value = name;
-    calculate();
-}
-
-function getSingleMult(atk, def) {
-    if (baseCounters[atk] && baseCounters[atk].includes(def)) return 2.0;
-    return 1.0;
-}
-
+function quickCalc(name) { document.getElementById('propInput').value = name; calculate(); }
+function getSingleMult(atk, def) { return (baseCounters[atk] && baseCounters[atk].includes(def)) ? 2.0 : 1.0; }
 function getRateStyle(rate) {
     if (rate >= 4.0) return { cls: 'bg-40', textCls: 'c-40', label: '极致4倍爆杀' };
     if (rate >= 2.5) return { cls: 'bg-25', textCls: 'c-25', label: '巨额克制倍率' };
     if (rate >= 2.0) return { cls: 'bg-20', textCls: 'c-20', label: '常规高伤克制' };
-    if (rate >= 1.5) return { cls: 'bg-15', textCls: 'c-15', label: '中度辅助克制' };
-    return { cls: 'bg-12', textCls: 'c-12', label: '轻度克制' };
+    return { cls: 'bg-15', textCls: 'c-15', label: '中度克制' };
 }
 
 function calculate() {
     const raw = document.getElementById('propInput').value.trim();
     if (!raw) return;
-
-    // 格式化用户输入，切分可能存在的双属性
     const targets = raw.split(/[·\.\s\/-]+/).filter(Boolean);
-    const resultBox = document.getElementById('resultBox');
+    const resultBox = document.getElementById('calcResultBox');
     resultBox.innerHTML = '';
-
     const list = [];
 
-    // 计算所有单系
+    // 单系
     Object.keys(baseCounters).forEach(atk => {
         let mult = 1.0;
-        if (targets.length === 1) {
-            mult = getSingleMult(atk, targets[0]);
-        } else {
-            const m1 = getSingleMult(atk, targets[0]);
-            const m2 = getSingleMult(atk, targets[1]);
-            if (m1 === 2.0 && m2 === 2.0) mult = 4.0;
-            else if (m1 === 2.0 || m2 === 2.0) mult = 2.0;
-            else mult = 1.0;
+        if (targets.length === 1) mult = getSingleMult(atk, targets[0]);
+        else {
+            const m1 = getSingleMult(atk, targets[0]), m2 = getSingleMult(atk, targets[1]);
+            if (m1 === 2.0 && m2 === 2.0) mult = 4.0; else if (m1 === 2.0 || m2 === 2.0) mult = 2.0;
         }
-        if (mult > 1.0) {
-            list.push({ prop: atk, isDual: false, rate: mult, pets: petLibrary[atk] || ["该系强攻手"] });
-        }
+        if (mult > 1.0) list.push({ prop: atk, isDual: false, rate: mult, pets: calcPetLibrary[atk] || ["该系强攻手"] });
     });
 
-    // 计算所有具备强攻手的双系
+    // 双系
     dualPropsList.forEach(([p1, p2]) => {
         const dualName = `${p1}·${p2}`;
-        const altDualName = `${p2}·${p1}`;
-        const pets = petLibrary[dualName] || petLibrary[altDualName] || ["该复合系强攻手"];
-
         let mult = 1.0;
         if (targets.length === 1) {
-            const m1 = getSingleMult(p1, targets[0]);
-            const m2 = getSingleMult(p2, targets[0]);
-            if (m1 === 2.0 && m2 === 2.0) mult = 2.5; 
-            else if (m1 === 2.0 || m2 === 2.0) mult = 2.0;
+            const m1 = getSingleMult(p1, targets[0]), m2 = getSingleMult(p2, targets[0]);
+            if (m1 === 2.0 && m2 === 2.0) mult = 2.5; else if (m1 === 2.0 || m2 === 2.0) mult = 2.0;
         } else {
             const t1 = targets[0], t2 = targets[1];
-            const count = (getSingleMult(p1, t1)===2.0 ? 1 : 0) + 
-                          (getSingleMult(p1, t2)===2.0 ? 1 : 0) + 
-                          (getSingleMult(p2, t1)===2.0 ? 1 : 0) + 
-                          (getSingleMult(p2, t2)===2.0 ? 1 : 0);
-            if (count >= 3) mult = 4.0;
-            else if (count === 2) mult = 2.5;
-            else if (count === 1) mult = 1.5;
+            const count = (getSingleMult(p1, t1)===2.0?1:0) + (getSingleMult(p1, t2)===2.0?1:0) + 
+                          (getSingleMult(p2, t1)===2.0?1:0) + (getSingleMult(p2, t2)===2.0?1:0);
+            if (count >= 3) mult = 4.0; else if (count === 2) mult = 2.5; else if (count === 1) mult = 1.5;
         }
-        if (mult > 1.0) list.push({ prop: dualName, isDual: true, rate: mult, pets: pets });
+        if (mult > 1.0) list.push({ prop: dualName, isDual: true, rate: mult, pets: calcPetLibrary[dualName] || ["该复合系强攻手"] });
     });
 
-    // 严谨排序：按倍率从高到低
     list.sort((a, b) => b.rate - a.rate);
-
-    // 聚合分组
     const grouped = {};
     list.forEach(item => {
-        const rKey = item.rate.toFixed(2).replace('.00',''); 
+        const rKey = item.rate.toFixed(1); 
         if (!grouped[rKey]) grouped[rKey] = [];
         grouped[rKey].push(item);
     });
@@ -263,61 +348,28 @@ function calculate() {
     const sortedRateKeys = Object.keys(grouped).sort((a, b) => parseFloat(b) - parseFloat(a));
 
     if (sortedRateKeys.length === 0) {
-        resultBox.innerHTML = `
-            <div class="group-card">
-                <div class="prop-item">
-                    无明显属性克制。建议直接出动无视克制关系的 <strong>“机制类强攻真神”</strong>：
-                    <div class="pet-list" style="margin-top:8px;">
-                        <span class="pet-tag"><span class="pet-mult c-20">引爆</span>王之哈莫</span>
-                        <span class="pet-tag"><span class="pet-mult c-20">固伤</span>艾欧丽娅</span>
-                        <span class="pet-tag"><span class="pet-mult c-20">站场</span>幻境界皇</span>
-                        <span class="pet-tag"><span class="pet-mult c-20">低体</span>魔钰</span>
-                    </div>
-                </div>
-            </div>
-        `;
+        resultBox.innerHTML = `<div class="group-card">未找到克制。推荐无视克制的强攻真神：<br><span style="color:var(--yellow); font-weight:bold;">王之哈莫、艾欧丽娅、魔钰</span>。</div>`;
         return;
     }
 
-    // 渲染卡片
     sortedRateKeys.forEach(rKey => {
         const rateVal = parseFloat(rKey);
         const style = getRateStyle(rateVal);
-        const items = grouped[rKey];
-
         const card = document.createElement('div');
         card.className = `group-card ${style.cls}`;
-
-        let html = `
-            <div class="rate-header">
-                <div class="rate-badge ${style.textCls}">
-                    <span>${rateVal} 倍克制</span>
-                </div>
-                <span class="rate-tag" style="background:rgba(255,255,255,0.08);">${style.label}</span>
-            </div>
-        `;
-
-        items.forEach(item => {
-            html += `
-                <div class="prop-item">
-                    <div class="prop-title">
-                        <span class="prop-name">【${item.prop}】</span>
-                        <span class="prop-type-badge">${item.isDual ? '双属性' : '单系'}</span>
-                    </div>
-                    <div class="pet-list">
-                        ${item.pets.map(pet => `
-                            <span class="pet-tag">
-                                <span class="pet-mult ${style.textCls}">${rateVal}x</span>${pet}
-                            </span>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+        let html = `<div class="rate-header"><div class="rate-badge ${style.textCls}">${rateVal} 倍克制</div><span class="rate-tag" style="background:rgba(255,255,255,0.08);">${style.label}</span></div>`;
+        grouped[rKey].forEach(item => {
+            html += `<div class="prop-item"><div class="prop-title"><span class="prop-name">【${item.prop}】</span></div><div class="pet-list">`;
+            item.pets.forEach(pet => { html += `<span class="pet-tag"><span class="pet-mult ${style.textCls}">${rateVal}x</span>${pet}</span>`; });
+            html += `</div></div>`;
         });
         card.innerHTML = html;
         resultBox.appendChild(card);
     });
 }
+
+// 初始化
+initDexTabs();
 </script>
 </body>
 </html>
