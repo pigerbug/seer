@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛尔号属性克制与打手速查器</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+            --accent: #38bdf8;
+            --highlight: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 650px; }
+        h1 { font-size: 1.4rem; text-align: center; margin-bottom: 8px; color: var(--accent); }
+        .desc { text-align: center; font-size: 0.85rem; color: var(--subtext); margin-bottom: 20px; }
+        
+        .search-box {
+            display: flex; gap: 8px; margin-bottom: 16px;
+        }
+        input {
+            flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #334155;
+            background: var(--card); color: #fff; font-size: 1rem; outline: none;
+        }
+        input:focus { border-color: var(--accent); }
+        button {
+            padding: 12px 20px; border-radius: 8px; border: none; background: var(--primary);
+            color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        button:hover { background: #1d4ed8; }
+        
+        .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+        .tag {
+            font-size: 0.75rem; padding: 4px 8px; background: #334155; border-radius: 4px;
+            cursor: pointer; color: #cbd5e1;
+        }
+        .tag:hover { background: var(--primary); color: #fff; }
+
+        .result-container { display: flex; flex-direction: column; gap: 12px; }
+        .group-card {
+            background: var(--card); border-radius: 10px; padding: 14px;
+            border-left: 5px solid var(--accent);
+        }
+        .rate-title {
+            font-size: 1.1rem; font-weight: bold; color: #38bdf8; display: flex;
+            align-items: center; justify-content: space-between; margin-bottom: 8px;
+        }
+        .rate-title.ultra { color: var(--highlight); }
+        .prop-item { margin-bottom: 6px; font-size: 0.95rem; }
+        .prop-name { color: #facc15; font-weight: bold; }
+        .pet-recom { font-size: 0.85rem; color: var(--subtext); margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>赛尔号 PVE 属性克制速查</h1>
+    <p class="desc">输入BOSS防御属性，自动换算克制倍率及主流打手精灵</p>
+
+    <div class="search-box">
+        <input type="text" id="propInput" placeholder="输入属性，如：水、暗影、水·暗影、圣灵">
+        <button onclick="calculate()">查询</button>
+    </div>
+
+    <div class="tags">
+        <span class="tag" onclick="quickQuery('草')">草</span>
+        <span class="tag" onclick="quickQuery('水·暗影')">水·暗影</span>
+        <span class="tag" onclick="quickQuery('电·战斗')">电·战斗</span>
+        <span class="tag" onclick="quickQuery('圣灵·自然')">圣灵·自然</span>
+        <span class="tag" onclick="quickQuery('机械·地面')">机械·地面</span>
+        <span class="tag" onclick="quickQuery('混沌·圣灵')">混沌·圣灵</span>
+    </div>
+
+    <div class="result-container" id="resultBox"></div>
+</div>
+
+<script>
+// 单属性常用代表精灵库
+const recommendPets = {
+    "电": "圣霆·雷伊、王·雷伊、雷神雷伊",
+    "草": "王·草王、生灵之主·蒙娜丽莎",
+    "火": "艾欧丽娅（有女汉子神技）、不灭·艾恩斯",
+    "水": "沧岚、王·沧岚",
+    "飞行": "王·托鲁克",
+    "地面": "王·卡修斯、镇魂·波希冬",
+    "机械": "赛伯斯特、机械塔克林",
+    "普通": "四九圣尊",
+    "冰": "柯尔德",
+    "战斗": "王·盖亚、阿尔蒂克",
+    "光": "光之惩戒·英卡洛斯",
+    "暗影": "暗影极夜·诺伊尔顿",
+    "神秘": "米斯蒂克",
+    "龙": "王·之哈莫（龙族首选打手）、龙胆·赵云",
+    "圣灵": "圣灵谱尼、迈尔斯",
+    "次元": "弗里德、星皇",
+    "自然": "幻境界皇（PVE平民真神）",
+    "远古": "远古王、库贝萨隆",
+    "邪灵": "万妖王·摩哥斯",
+    "混沌": "混沌魔君索伦森",
+    "神灵": "圣灵谱尼、天启帝君",
+    "王": "重生之翼、芳馨·茉莉"
+};
+
+// 基础单属性克制表（攻 -> 防克制列表）
+const basicCounters = {
+    "草": ["水", "地面", "光"],
+    "水": ["火", "地面"],
+    "火": ["草", "冰", "机械"],
+    "电": ["水", "飞行", "暗影"],
+    "地面": ["火", "电", "机械"],
+    "飞行": ["草", "战斗"],
+    "战斗": ["机械", "冰", "龙", "圣灵"],
+    "机械": ["冰", "战斗"],
+    "冰": ["草", "地面", "飞行", "龙"],
+    "光": ["暗影", "超能"],
+    "暗影": ["超能", "次元"],
+    "龙": ["冰", "圣灵"],
+    "圣灵": ["水", "火", "草", "电", "冰"],
+    "次元": ["超能", "邪灵"],
+    "邪灵": ["光", "暗影"],
+    "自然": ["水", "火", "草", "地面", "光"],
+    "王": ["草", "水", "火", "战斗", "暗影", "光"],
+    "混沌": ["圣灵", "暗影", "邪灵"],
+    "神灵": ["混沌", "邪灵", "神秘"]
+};
+
+function quickQuery(name) {
+    document.getElementById('propInput').value = name;
+    calculate();
+}
+
+function calculate() {
+    const input = document.getElementById('propInput').value.trim();
+    if (!input) return;
+
+    const parts = input.split(/[·\.\s\/-]/).filter(p => p.length > 0);
+    const resultBox = document.getElementById('resultBox');
+    resultBox.innerHTML = '';
+
+    const rateGroups = { "4.0": [], "2.5~2.0": [], "1.5": [] };
+
+    if (parts.length === 1) {
+        const target = parts[0];
+        let found = false;
+        for (const [atk, defs] of Object.entries(basicCounters)) {
+            if (defs.includes(target)) {
+                rateGroups["2.5~2.0"].push({ prop: atk, pets: recommendPets[atk] || "常规本系主攻" });
+                found = true;
+            }
+        }
+    } else if (parts.length >= 2) {
+        const t1 = parts[0];
+        const t2 = parts[1];
+
+        for (const [atk, defs] of Object.entries(basicCounters)) {
+            const c1 = defs.includes(t1);
+            const c2 = defs.includes(t2);
+
+            if (c1 && c2) {
+                rateGroups["4.0"].push({ prop: atk, pets: recommendPets[atk] || "核心爆发打手" });
+            } else if (c1 || c2) {
+                rateGroups["2.5~2.0"].push({ prop: atk, pets: recommendPets[atk] || "常规本系打手" });
+            }
+        }
+    }
+
+    // 渲染结果
+    let hasResult = false;
+    for (const [rate, items] of Object.entries(rateGroups)) {
+        if (items.length > 0) {
+            hasResult = true;
+            const card = document.createElement('div');
+            card.className = 'group-card';
+            const isUltra = rate === "4.0";
+            
+            let html = `<div class="rate-title ${isUltra ? 'ultra' : ''}">
+                <span>${rate} 倍克制</span>
+                <span style="font-size:0.8rem; font-weight:normal;">${isUltra ? '极度推荐（瞬间爆发）' : '推荐攻坚'}</span>
+            </div>`;
+
+            items.forEach(item => {
+                html += `<div class="prop-item">
+                    <span class="prop-name">【${item.prop}系】</span>
+                    <div class="pet-recom">推荐打手：${item.pets}</div>
+                </div>`;
+            });
+            card.innerHTML = html;
+            resultBox.appendChild(card);
+        }
+    }
+
+    if (!hasResult) {
+        resultBox.innerHTML = `<div class="group-card"><div class="prop-item">未匹配到明显克制关系或属于冷门属性组，建议直接使用 <b>幻境界皇、王之哈莫、圣灵谱尼</b> 等泛用型打手进行攻略。</div></div>`;
+    }
+}
+</script>
+</body>
+</html>
