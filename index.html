@@ -3,110 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>赛尔号属性克制与打手速查器</title>
+    <title>赛尔号属性克制与PVE强攻手速查</title>
     <style>
         :root {
             --primary: #2563eb;
-            --bg: #0f172a;
+            --bg: #0b1120;
             --card: #1e293b;
+            --border: #334155;
             --text: #f8fafc;
             --subtext: #94a3b8;
             --accent: #38bdf8;
             --highlight: #ef4444;
+            --warning: #f59e0b;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 650px; }
-        h1 { font-size: 1.4rem; text-align: center; margin-bottom: 8px; color: var(--accent); }
-        .desc { text-align: center; font-size: 0.85rem; color: var(--subtext); margin-bottom: 20px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 720px; }
+        h1 { font-size: 1.45rem; text-align: center; margin-bottom: 6px; color: var(--accent); }
+        .desc { text-align: center; font-size: 0.85rem; color: var(--subtext); margin-bottom: 18px; }
         
         .search-box {
-            display: flex; gap: 8px; margin-bottom: 16px;
+            display: flex; gap: 8px; margin-bottom: 14px;
         }
         input {
-            flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #334155;
+            flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border);
             background: var(--card); color: #fff; font-size: 1rem; outline: none;
         }
         input:focus { border-color: var(--accent); }
         button {
-            padding: 12px 20px; border-radius: 8px; border: none; background: var(--primary);
-            color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s;
+            padding: 12px 22px; border-radius: 8px; border: none; background: var(--primary);
+            color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; white-space: nowrap;
         }
         button:hover { background: #1d4ed8; }
         
+        .tags-label { font-size: 0.75rem; color: var(--subtext); margin-bottom: 6px; }
         .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
         .tag {
-            font-size: 0.75rem; padding: 4px 8px; background: #334155; border-radius: 4px;
-            cursor: pointer; color: #cbd5e1;
+            font-size: 0.78rem; padding: 5px 10px; background: #1e293b; border: 1px solid var(--border);
+            border-radius: 6px; cursor: pointer; color: #cbd5e1; transition: 0.15s;
         }
-        .tag:hover { background: var(--primary); color: #fff; }
+        .tag:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-        .result-container { display: flex; flex-direction: column; gap: 12px; }
+        .result-container { display: flex; flex-direction: column; gap: 14px; }
         .group-card {
-            background: var(--card); border-radius: 10px; padding: 14px;
-            border-left: 5px solid var(--accent);
+            background: var(--card); border-radius: 10px; padding: 16px;
+            border: 1px solid var(--border);
         }
+        .group-card.rate-4 { border-left: 6px solid var(--highlight); }
+        .group-card.rate-2 { border-left: 6px solid var(--warning); }
+        .group-card.rate-1 { border-left: 6px solid var(--accent); }
+
         .rate-title {
-            font-size: 1.1rem; font-weight: bold; color: #38bdf8; display: flex;
-            align-items: center; justify-content: space-between; margin-bottom: 8px;
+            font-size: 1.15rem; font-weight: bold; display: flex;
+            align-items: center; justify-content: space-between; margin-bottom: 12px;
+            padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         .rate-title.ultra { color: var(--highlight); }
-        .prop-item { margin-bottom: 6px; font-size: 0.95rem; }
-        .prop-name { color: #facc15; font-weight: bold; }
-        .pet-recom { font-size: 0.85rem; color: var(--subtext); margin-top: 2px; }
+        .rate-title.high { color: var(--warning); }
+        .rate-title.mid { color: var(--accent); }
+        
+        .prop-item { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.05); }
+        .prop-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .prop-header { display: flex; align-items: baseline; gap: 8px; }
+        .prop-name { color: #facc15; font-weight: bold; font-size: 1rem; }
+        .prop-type { font-size: 0.75rem; padding: 1px 6px; border-radius: 4px; background: #334155; color: #94a3b8; }
+        .pet-recom { font-size: 0.88rem; color: #e2e8f0; margin-top: 4px; line-height: 1.4; }
+        .pet-highlight { color: #38bdf8; font-weight: 500; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>赛尔号 PVE 属性克制速查</h1>
-    <p class="desc">输入BOSS防御属性，自动换算克制倍率及主流打手精灵</p>
+    <h1>赛尔号 PVE 强攻克制速查器</h1>
+    <p class="desc">支持单/双属性查询，自动匹配单系、复合双系及一线 PVE 爆发强攻手</p>
 
     <div class="search-box">
-        <input type="text" id="propInput" placeholder="输入属性，如：水、暗影、水·暗影、圣灵">
-        <button onclick="calculate()">查询</button>
+        <input type="text" id="propInput" placeholder="输入Boss属性，如：草、水·暗影、电·战斗、混沌·圣灵">
+        <button onclick="calculate()">查询克制</button>
     </div>
 
+    <div class="tags-label">热门 Boss 属性快捷查询：</div>
     <div class="tags">
         <span class="tag" onclick="quickQuery('草')">草</span>
         <span class="tag" onclick="quickQuery('水·暗影')">水·暗影</span>
         <span class="tag" onclick="quickQuery('电·战斗')">电·战斗</span>
         <span class="tag" onclick="quickQuery('圣灵·自然')">圣灵·自然</span>
-        <span class="tag" onclick="quickQuery('机械·地面')">机械·地面</span>
+        <span class="tag" onclick="quickQuery('远古·战斗')">远古·战斗</span>
         <span class="tag" onclick="quickQuery('混沌·圣灵')">混沌·圣灵</span>
+        <span class="tag" onclick="quickQuery('机械·地面')">机械·地面</span>
+        <span class="tag" onclick="quickQuery('神灵')">神灵</span>
     </div>
 
     <div class="result-container" id="resultBox"></div>
 </div>
 
 <script>
-// 单属性常用代表精灵库
-const recommendPets = {
-    "电": "圣霆·雷伊、王·雷伊、雷神雷伊",
-    "草": "王·草王、生灵之主·蒙娜丽莎",
-    "火": "艾欧丽娅（有女汉子神技）、不灭·艾恩斯",
+// 单系与双系 PVE 优先强攻手精灵库（优先收录一线高爆发、暴击、先手或高固伤打手）
+const attackerPets = {
+    // --- 单系 ---
+    "火": "艾欧丽娅（有女汉子爆发/大招高威力）、不灭·艾恩斯",
+    "草": "生灵之主·蒙娜丽莎、王·草王、丽莎布布",
     "水": "沧岚、王·沧岚",
-    "飞行": "王·托鲁克",
+    "电": "圣霆·雷伊、王·雷伊、雷神雷伊",
     "地面": "王·卡修斯、镇魂·波希冬",
-    "机械": "赛伯斯特、机械塔克林",
-    "普通": "四九圣尊",
-    "冰": "柯尔德",
-    "战斗": "王·盖亚、阿尔蒂克",
-    "光": "光之惩戒·英卡洛斯",
-    "暗影": "暗影极夜·诺伊尔顿",
-    "神秘": "米斯蒂克",
-    "龙": "王·之哈莫（龙族首选打手）、龙胆·赵云",
+    "飞行": "王·托鲁克、圣化托鲁克",
+    "机械": "赛伯斯特（高额机械爆发）、机械塔克林",
+    "战斗": "阿尔蒂克、王·盖亚",
+    "冰": "柯尔德、冰角玄龙",
+    "超能": "王·缪斯、海瑟薇",
+    "光": "光之惩戒·英卡洛斯（极高PVE爆发打手）",
+    "暗影": "暗影极夜·诺伊尔顿、布莱克",
+    "神秘": "米斯蒂克、卡蒂亚",
+    "龙": "王·之哈莫（PVE平民真神/高倍引爆）、龙胆·赵云",
     "圣灵": "圣灵谱尼、迈尔斯",
     "次元": "弗里德、星皇",
-    "自然": "幻境界皇（PVE平民真神）",
     "远古": "远古王、库贝萨隆",
-    "邪灵": "万妖王·摩哥斯",
+    "邪灵": "万妖王·摩哥斯（堕落绝语单次爆发）",
+    "自然": "幻境界皇（PVE通关利器/极强续航强攻）、拂晓兔",
+    "王": "重生之翼、芳馨·茉莉",
     "混沌": "混沌魔君索伦森",
-    "神灵": "圣灵谱尼、天启帝君",
-    "王": "重生之翼、芳馨·茉莉"
+    "神灵": "圣灵谱尼（极度推荐神灵主攻）",
+
+    // --- 双系 / 复合系 ---
+    "自然·圣灵": "莫妮卡（圣灵自然爆发神宠）",
+    "圣灵·自然": "莫妮卡",
+    "自然·冰": "千裳（PVE极致强化输出手）",
+    "冰·自然": "千裳",
+    "电·火": "圣光天马、雷炎·雷伊",
+    "电·战斗": "圣甲·雷伊、神威·雷伊",
+    "电·暗影": "混沌·雷伊",
+    "电·圣灵": "圣灵雷皇",
+    "远古·圣灵": "圣灵·远古圣神",
+    "远古·战斗": "格罗姆特（屠龙者/极强特定增伤）",
+    "远古·草": "圣王·本景",
+    "混沌·暗影": "混沌魔君索伦森",
+    "混沌·圣灵": "混沌·圣灵谱尼",
+    "机械·地面": "圣甲·地裂、玄武完全体",
+    "圣灵·次元": "星皇",
+    "光·暗影": "魔灵王·斯摩亚蒂",
+    "火·航空": "火灵使者",
+    "水·龙": "沧澜·龙尊",
+    "火·龙": "烈焰·巨龙"
 };
 
-// 基础单属性克制表（攻 -> 防克制列表）
+// 基础单系克制关系表（仅收录 2.0 倍完全克制关系）
 const basicCounters = {
     "草": ["水", "地面", "光"],
     "水": ["火", "地面"],
@@ -119,6 +159,7 @@ const basicCounters = {
     "冰": ["草", "地面", "飞行", "龙"],
     "光": ["暗影", "超能"],
     "暗影": ["超能", "次元"],
+    "神秘": ["电", "圣灵"],
     "龙": ["冰", "圣灵"],
     "圣灵": ["水", "火", "草", "电", "冰"],
     "次元": ["超能", "邪灵"],
@@ -129,73 +170,147 @@ const basicCounters = {
     "神灵": ["混沌", "邪灵", "神秘"]
 };
 
+// 预设的双属性攻击系清单
+const dualAttackProps = [
+    ["自然", "圣灵"], ["冰", "自然"], ["电", "火"], ["电", "战斗"],
+    ["电", "暗影"], ["电", "圣灵"], ["远古", "战斗"], ["远古", "圣灵"],
+    ["机械", "地面"], ["混沌", "暗影"], ["混沌", "圣灵"], ["光", "暗影"]
+];
+
 function quickQuery(name) {
     document.getElementById('propInput').value = name;
     calculate();
 }
 
-function calculate() {
-    const input = document.getElementById('propInput').value.trim();
-    if (!input) return;
+// 计算单攻击属性对单防守属性的倍率
+function getSingleMultiplier(atk, def) {
+    if (basicCounters[atk] && basicCounters[atk].includes(def)) return 2.0;
+    return 1.0; 
+}
 
-    const parts = input.split(/[·\.\s\/-]/).filter(p => p.length > 0);
+function calculate() {
+    const raw = document.getElementById('propInput').value.trim();
+    if (!raw) return;
+
+    // 支持 "水·暗影"、"水 暗影"、"水-暗影"、"水/暗影" 等各种输入
+    const targets = raw.split(/[·\.\s\/-]+/).filter(Boolean);
     const resultBox = document.getElementById('resultBox');
     resultBox.innerHTML = '';
 
-    const rateGroups = { "4.0": [], "2.5~2.0": [], "1.5": [] };
+    const rateGroups = {
+        "4.0": [],
+        "2.5~2.0": [],
+        "1.5": []
+    };
 
-    if (parts.length === 1) {
-        const target = parts[0];
-        let found = false;
-        for (const [atk, defs] of Object.entries(basicCounters)) {
-            if (defs.includes(target)) {
-                rateGroups["2.5~2.0"].push({ prop: atk, pets: recommendPets[atk] || "常规本系主攻" });
-                found = true;
-            }
+    // 1. 判定单属性攻击方
+    for (const atk of Object.keys(basicCounters)) {
+        let mult = 1.0;
+        if (targets.length === 1) {
+            mult = getSingleMultiplier(atk, targets[0]);
+        } else if (targets.length >= 2) {
+            const m1 = getSingleMultiplier(atk, targets[0]);
+            const m2 = getSingleMultiplier(atk, targets[1]);
+            if (m1 === 2.0 && m2 === 2.0) mult = 4.0;
+            else if (m1 === 2.0 || m2 === 2.0) mult = 2.0;
+            else mult = 1.0;
         }
-    } else if (parts.length >= 2) {
-        const t1 = parts[0];
-        const t2 = parts[1];
 
-        for (const [atk, defs] of Object.entries(basicCounters)) {
-            const c1 = defs.includes(t1);
-            const c2 = defs.includes(t2);
-
-            if (c1 && c2) {
-                rateGroups["4.0"].push({ prop: atk, pets: recommendPets[atk] || "核心爆发打手" });
-            } else if (c1 || c2) {
-                rateGroups["2.5~2.0"].push({ prop: atk, pets: recommendPets[atk] || "常规本系打手" });
-            }
+        if (mult >= 4.0) {
+            rateGroups["4.0"].push({ name: atk, isDual: false, pets: attackerPets[atk] || "常规本系强攻手" });
+        } else if (mult >= 2.0) {
+            rateGroups["2.5~2.0"].push({ name: atk, isDual: false, pets: attackerPets[atk] || "常规本系强攻手" });
         }
     }
+
+    // 2. 判定双属性复合攻击方
+    dualAttackProps.forEach(([p1, p2]) => {
+        const dualName = `${p1}·${p2}`;
+        const altDualName = `${p2}·${p1}`;
+        const petRecom = attackerPets[dualName] || attackerPets[altDualName] || "该复合系高爆发打手";
+
+        let finalRate = 1.0;
+        if (targets.length === 1) {
+            const m1 = getSingleMultiplier(p1, targets[0]);
+            const m2 = getSingleMultiplier(p2, targets[0]);
+            if (m1 === 2.0 && m2 === 2.0) finalRate = 2.5; // 双克单强加权
+            else if (m1 === 2.0 || m2 === 2.0) finalRate = 2.0;
+        } else if (targets.length >= 2) {
+            const t1 = targets[0], t2 = targets[1];
+            const p1_t1 = getSingleMultiplier(p1, t1) === 2.0;
+            const p1_t2 = getSingleMultiplier(p1, t2) === 2.0;
+            const p2_t1 = getSingleMultiplier(p2, t1) === 2.0;
+            const p2_t2 = getSingleMultiplier(p2, t2) === 2.0;
+
+            const totalCounters = (p1_t1?1:0) + (p1_t2?1:0) + (p2_t1?1:0) + (p2_t2?1:0);
+
+            if (totalCounters >= 3) finalRate = 4.0;
+            else if (totalCounters === 2) finalRate = 2.5;
+            else if (totalCounters === 1) finalRate = 1.5;
+        }
+
+        if (finalRate >= 4.0) {
+            rateGroups["4.0"].push({ name: dualName, isDual: true, pets: petRecom });
+        } else if (finalRate >= 2.0) {
+            rateGroups["2.5~2.0"].push({ name: dualName, isDual: true, pets: petRecom });
+        } else if (finalRate === 1.5) {
+            rateGroups["1.5"].push({ name: dualName, isDual: true, pets: petRecom });
+        }
+    });
 
     // 渲染结果
     let hasResult = false;
-    for (const [rate, items] of Object.entries(rateGroups)) {
-        if (items.length > 0) {
+    const groupConfigs = [
+        { key: "4.0", cls: "rate-4", titleCls: "ultra", title: "4.0 倍极致克制", sub: "顶级核弹输出，首选直接秒杀" },
+        { key: "2.5~2.0", cls: "rate-2", titleCls: "high", title: "2.0 ~ 2.5 倍常规高额克制", sub: "主力强攻手推荐" },
+        { key: "1.5", cls: "rate-1", titleCls: "mid", title: "1.5 倍微弱偏向克制", sub: "备选输出补充" }
+    ];
+
+    groupConfigs.forEach(cfg => {
+        const list = rateGroups[cfg.key];
+        if (list && list.length > 0) {
             hasResult = true;
             const card = document.createElement('div');
-            card.className = 'group-card';
-            const isUltra = rate === "4.0";
-            
-            let html = `<div class="rate-title ${isUltra ? 'ultra' : ''}">
-                <span>${rate} 倍克制</span>
-                <span style="font-size:0.8rem; font-weight:normal;">${isUltra ? '极度推荐（瞬间爆发）' : '推荐攻坚'}</span>
-            </div>`;
+            card.className = `group-card ${cfg.cls}`;
 
-            items.forEach(item => {
-                html += `<div class="prop-item">
-                    <span class="prop-name">【${item.prop}系】</span>
-                    <div class="pet-recom">推荐打手：${item.pets}</div>
-                </div>`;
+            let html = `
+                <div class="rate-title ${cfg.titleCls}">
+                    <span>${cfg.title}</span>
+                    <span style="font-size:0.8rem; font-weight:normal;">${cfg.sub}</span>
+                </div>
+            `;
+
+            list.forEach(item => {
+                html += `
+                    <div class="prop-item">
+                        <div class="prop-header">
+                            <span class="prop-name">【${item.name}】</span>
+                            <span class="prop-type">${item.isDual ? '双属性组合' : '单系'}</span>
+                        </div>
+                        <div class="pet-recom">强攻精灵优先推荐：<span class="pet-highlight">${item.pets}</span></div>
+                    </div>
+                `;
             });
+
             card.innerHTML = html;
             resultBox.appendChild(card);
         }
-    }
+    });
 
     if (!hasResult) {
-        resultBox.innerHTML = `<div class="group-card"><div class="prop-item">未匹配到明显克制关系或属于冷门属性组，建议直接使用 <b>幻境界皇、王之哈莫、圣灵谱尼</b> 等泛用型打手进行攻略。</div></div>`;
+        resultBox.innerHTML = `
+            <div class="group-card">
+                <div class="prop-item">
+                    未匹配到特定针对性克制关系。建议直接使用泛用型 PVE 爆发与站场巨头：
+                    <div class="pet-recom" style="margin-top:6px;">
+                        <span class="pet-highlight">王·之哈莫</span>（龙系巨额引爆）、
+                        <span class="pet-highlight">艾欧丽娅</span>（大招暴击强秒）、
+                        <span class="pet-highlight">幻境界皇</span>（稳定增伤续航）、
+                        <span class="pet-highlight">千裳</span>（自然冰极速强化）
+                    </div>
+                </div>
+            </div>
+        `;
     }
 }
 </script>
